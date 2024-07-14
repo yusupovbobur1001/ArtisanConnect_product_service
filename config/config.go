@@ -6,16 +6,17 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/cast"
+
 )
 
 type Config struct {
-	HTTP_PORT                string
+	HTTP_PORT            string
 	PRODUCT_SERVICE_PORT string
-	DB_HOST                  string
-	DB_PORT                  string
-	DB_USER                  string
-	DB_PASSWORD              string
-	DB_NAME                  string
+	DB_HOST              string
+	DB_PORT              string
+	DB_USER              string
+	DB_PASSWORD          string
+	DB_NAME              string
 }
 
 func Load() *Config {
