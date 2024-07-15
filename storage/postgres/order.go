@@ -55,7 +55,7 @@ func (o *OrderRepo) CancelOrder(req *pb.Id) (*pb.CancelOrder1, error) {
 
 }
 
-func (o *OrderRepo) UpdateOrderStatus(req *pb.UpdateOrderStatusRequest) (*pb.U, error) {
+func (o *OrderRepo) UpdateOrderStatus(req *pb.UpdateOrderStatusRequest) (*pb.UpdateOrderRespons, error) {
 	q := `
 		update
 			orders
