@@ -3,7 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
-	pb "product_service/genproto/proto"
+	pb "product_service/genproto/products"
 	"time"
 )
 

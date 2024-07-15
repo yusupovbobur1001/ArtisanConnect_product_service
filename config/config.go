@@ -6,12 +6,12 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/cast"
-
 )
 
 type Config struct {
 	HTTP_PORT            string
 	PRODUCT_SERVICE_PORT string
+	AUTH_SERVICE_PORT    string
 	DB_HOST              string
 	DB_PORT              string
 	DB_USER              string

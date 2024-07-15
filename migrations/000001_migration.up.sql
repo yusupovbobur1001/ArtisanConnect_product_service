@@ -26,7 +26,7 @@ CREATE TABLE order_items (--+
     id UUID PRIMARY KEY,
     order_id UUID REFERENCES orders(id),
     product_id UUID REFERENCES products(id),
-    quantity INTEGER NOT NULL,
+    total_amount float NOT NULL,
     price DECIMAL(10, 2) NOT NULL
 );
 
@@ -51,7 +51,9 @@ CREATE TABLE payments (
     order_id UUID REFERENCES orders(id),
     amount DECIMAL(10, 2) NOT NULL,
     status VARCHAR(20) NOT NULL,
-    transaction_id VARCHAR(100),
+    transaction_id serial,
     payment_method VARCHAR(50) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+
