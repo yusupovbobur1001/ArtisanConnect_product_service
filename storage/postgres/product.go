@@ -94,69 +94,95 @@ func (p *ProdutRepo) DeleteProduct(req *pb.Id) (*pb.DeleteProductResponse, error
 	return &pb.DeleteProductResponse{Message: "product id deleted"}, nil
 }
 
-
-
-
 func (p *ProdutRepo) ListProducts(req *pb.ListProductsRequest) (*pb.ListProductsResponse, error) {
-	resp := pb.ListProductsResponse{}
+	resp := &pb.ListProductsResponse{}
 
 	m, err := p.GetAllProduct()
 	if err != nil {
 		return nil, err
 	}
 	total := len(m)
-	totalPage := total/int(req.Limit)
+
+	totalPage := (total + int(req.Limit) - 1) / int(req.Limit)
 	if totalPage < int(req.Page) {
-		return nil, fmt.Errorf("totalPage dan page katta bo`lib qoldi!")
-	}
-	start_row := 1
-	end_row := 0
-	for i := 1; i < int(req.Page); i++ {
-		if int(req.Page) > 1 {
-			start_row += int(req.Limit)
-			end_row += start_row + int(req.Limit)
-		} else {
-			start_row = 1
-			end_row = int(req.Limit)
-		}
+		return nil, fmt.Errorf("totalPage dan page katta bo`lib qoldi!, err: %v", err)
 	}
 
-	b := []pb.ProductInfo{}
+	startRow := (int(req.Page)-1)*int(req.Limit) + 1
+	endRow := startRow + int(req.Limit) - 1
+	if endRow > total {
+		endRow = total
+	}
 
-	q := `WITH NumberedRows AS (
-    	SELECT 
-			*, ROW_NUMBER() OVER (ORDER BY id) AS row_num
-   	 	FROM 
-			users
+	b := []*pb.ProductInfo{}
+
+	q := `
+		WITH NumberedRows AS (
+			SELECT 
+				id, name, description, price, category_id, quantity, artisan_id, created_at, updated_at,
+				ROW_NUMBER() OVER (ORDER BY id) AS row_num
+			FROM 
+				products
 		)
 		SELECT 
-			* 
+			id, name, description, price, category_id, quantity, artisan_id, created_at, updated_at
 		FROM 
 			NumberedRows
 		WHERE 
-			row_num BETWEEN $1 AND $2 `
+			row_num BETWEEN $1 AND $2
+	`
 
-	rows, err := p.Db.Query(q, start_row, end_row).Scan()
-	
+	rows, err := p.Db.Query(q, startRow, endRow)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		product := &pb.ProductInfo{}
+		err := rows.Scan(
+			&product.Id,
+			&product.Name,
+			&product.Description,
+			&product.Price,
+			&product.CategoryId,
+			&product.Quantity,
+			&product.ArtisanId,
+			&product.CreatedAt,
+			&product.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		b = append(b, product)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	resp.Products = b
+	return resp, nil
 }
 
-func (p *ProdutRepo) GetAllProduct() ([]pb.ProductInfo, error) {
-	resps := []pb.ProductInfo{}
+func (p *ProdutRepo) GetAllProduct() ([]*pb.ProductInfo, error) {
+	resps := []*pb.ProductInfo{}
 
-	q := `select 
+	q := `SELECT 
 				id, name, description, price, quantity, updated_at, created_at, category_id, artisan_id
-		  from 
+		  FROM 
 		  		products
-		  where 
-		  		deleted_at is null`
+		  WHERE 
+		  		deleted_at IS NULL`
 
 	rows, err := p.Db.Query(q)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
-		resp := pb.ProductInfo{}
+		resp := &pb.ProductInfo{}
 		err = rows.Scan(&resp.Id, &resp.Name, &resp.Description, &resp.Price,
 			&resp.Quantity, &resp.UpdatedAt, &resp.CreatedAt, &resp.CategoryId, &resp.ArtisanId)
 		if err != nil {
@@ -169,3 +195,168 @@ func (p *ProdutRepo) GetAllProduct() ([]pb.ProductInfo, error) {
 	return resps, nil
 }
 
+func (p *ProdutRepo) SearchProduct(req *pb.SearchProductsRequest) (*pb.SearchProductsResponse, error) {
+
+	b, err := p.GetAllProduct()
+	if err != nil {
+		fmt.Println(err, "+++++++++++++")
+		return nil, err
+	}
+	total := len(b)
+
+	totalPage := (total + int(req.Limit) - 1) / int(req.Limit)
+	if totalPage < int(req.Page) {
+		return nil, fmt.Errorf("totalPage dan page katta bo`lib qoldi!, err: %v", err)
+	}
+
+	startRow := (int(req.Page)-1)*int(req.Limit) + 1
+	endRow := startRow + int(req.Limit) - 1
+	if endRow > total {
+		endRow = total
+	}
+
+	q := `
+		WITH NumberedRows AS (
+			SELECT 
+				id, name, description, price, category_id, quantity, artisan_id, created_at, updated_at,
+				ROW_NUMBER() OVER (ORDER BY id) AS row_num
+			FROM 
+				products
+		)
+		SELECT 
+			id, name, description, price, category_id, quantity, artisan_id, created_at, updated_at
+		FROM 
+			NumberedRows
+		WHERE 
+			row_num BETWEEN $1 AND $2 
+			AND price > $3
+    		AND price < $4
+
+	`
+
+	params := []interface{}{}
+
+	if len(req.Query) > 0 {
+		params = append(params, req.Query)
+		q += fmt.Sprintf(" AND name = $%d ", len(params))
+	}
+
+	rows, err := p.Db.Query(q, startRow, endRow, req.MinPrice, req.MaxPrice)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	searchPs := []*pb.ProductInfo{}
+
+	for rows.Next() {
+		searchP := &pb.ProductInfo{}
+		err = rows.Scan(
+			&searchP.Id,
+			&searchP.Name,
+			&searchP.Description,
+			&searchP.Price,
+			&searchP.CategoryId,
+			&searchP.Quantity,
+			&searchP.ArtisanId,
+			&searchP.CreatedAt,
+			&searchP.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		searchPs = append(searchPs, searchP)
+	}
+	resp := pb.SearchProductsResponse{
+		Products: searchPs,
+		Total:    int32(total),
+		Page:     req.Page,
+		Limit:    req.Limit,
+	}
+	return &resp, nil
+}
+
+func (p *ProdutRepo) AddProductRating(req *pb.AddProductRatingRequest) (*pb.RatingInfo, error) {
+	resp := pb.RatingInfo{}
+	q := `
+		insert into rating ratings(
+								product_id,
+								user_id,
+								rating, 
+								comment,
+								created_id)
+		values($1, $2, $3, $4, $5)
+		returing id, product_id, user_id, rating, comment, created_at  `
+
+	err := p.Db.QueryRow(q, req.ProductId, req.UserId, req.Rating, req.Comment, time.Now()).Scan(
+		&resp.Id, &resp.ProductId, &resp.UserId, &resp.Rating, &resp.Comment, &resp.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+func (p *ProdutRepo) GetProductRatings(req *pb.Id) (*pb.GetProductRatingsResponse, error) {
+	resp := pb.GetProductRatingsResponse{}
+
+	q1 := `
+		SELECT
+    		id,
+    		product_id,
+    		user_id,
+    		rating,
+    		comment,
+    		created_at
+		FROM
+    		ratings
+		WHERE
+    		product_id = $1
+	`
+	ratings := []*pb.RatingInfo{}
+	rows, err := p.Db.Query(q1, req.ProductId)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		rating := &pb.RatingInfo{}
+		err = rows.Scan(
+			&rating.Id,
+			&rating.ProductId,
+			&rating.UserId,
+			&rating.Rating,
+			&rating.Comment,
+			&rating.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		ratings = append(ratings, rating)
+	}
+
+	q2 := `
+		SELECT
+    		AVG(rating) as average_rating,
+    		COUNT(*) as total_ratings
+		FROM
+    		ratings
+		WHERE
+    		product_id = $1
+
+	`
+	err = p.Db.QueryRow(q2, req.ProductId).Scan(
+		&resp.AverageRating,
+		&resp.TotalRatings,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetProductRatingsResponse{
+		Ratings:       ratings,
+		AverageRating: resp.AverageRating,
+		TotalRatings:  resp.TotalRatings,
+	}, nil
+}

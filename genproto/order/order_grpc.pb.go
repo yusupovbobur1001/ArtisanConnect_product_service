@@ -24,7 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type OrderServiceClient interface {
 	CreateOrder(ctx context.Context, in *CreateOrderRequest, opts ...grpc.CallOption) (*OrderInfo, error)
 	CancelOrder(ctx context.Context, in *Id, opts ...grpc.CallOption) (*CancelOrder1, error)
-	UpdateOrderStatus(ctx context.Context, in *UpdateOrderStatusRequest, opts ...grpc.CallOption) (*UpdateOrderRespons, error)
+	UpdateOrderStatus(ctx context.Context, in *UpdateOrderStatusRequest, opts ...grpc.CallOption) (*OrderInfo, error)
 	ListOrders(ctx context.Context, in *ListOrdersRequest, opts ...grpc.CallOption) (*ListOrdersResponse, error)
 	GetOrder(ctx context.Context, in *Id, opts ...grpc.CallOption) (*OrderInfo, error)
 	PayOrder(ctx context.Context, in *PayOrderRequest, opts ...grpc.CallOption) (*PaymentInfo, error)
@@ -59,8 +59,8 @@ func (c *orderServiceClient) CancelOrder(ctx context.Context, in *Id, opts ...gr
 	return out, nil
 }
 
-func (c *orderServiceClient) UpdateOrderStatus(ctx context.Context, in *UpdateOrderStatusRequest, opts ...grpc.CallOption) (*UpdateOrderRespons, error) {
-	out := new(UpdateOrderRespons)
+func (c *orderServiceClient) UpdateOrderStatus(ctx context.Context, in *UpdateOrderStatusRequest, opts ...grpc.CallOption) (*OrderInfo, error) {
+	out := new(OrderInfo)
 	err := c.cc.Invoke(ctx, "/orders.OrderService/UpdateOrderStatus", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -128,7 +128,7 @@ func (c *orderServiceClient) ValidateOrderId(ctx context.Context, in *Id, opts .
 type OrderServiceServer interface {
 	CreateOrder(context.Context, *CreateOrderRequest) (*OrderInfo, error)
 	CancelOrder(context.Context, *Id) (*CancelOrder1, error)
-	UpdateOrderStatus(context.Context, *UpdateOrderStatusRequest) (*UpdateOrderRespons, error)
+	UpdateOrderStatus(context.Context, *UpdateOrderStatusRequest) (*OrderInfo, error)
 	ListOrders(context.Context, *ListOrdersRequest) (*ListOrdersResponse, error)
 	GetOrder(context.Context, *Id) (*OrderInfo, error)
 	PayOrder(context.Context, *PayOrderRequest) (*PaymentInfo, error)
@@ -148,7 +148,7 @@ func (UnimplementedOrderServiceServer) CreateOrder(context.Context, *CreateOrder
 func (UnimplementedOrderServiceServer) CancelOrder(context.Context, *Id) (*CancelOrder1, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelOrder not implemented")
 }
-func (UnimplementedOrderServiceServer) UpdateOrderStatus(context.Context, *UpdateOrderStatusRequest) (*UpdateOrderRespons, error) {
+func (UnimplementedOrderServiceServer) UpdateOrderStatus(context.Context, *UpdateOrderStatusRequest) (*OrderInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateOrderStatus not implemented")
 }
 func (UnimplementedOrderServiceServer) ListOrders(context.Context, *ListOrdersRequest) (*ListOrdersResponse, error) {
