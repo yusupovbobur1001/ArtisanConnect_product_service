@@ -61,10 +61,7 @@ func (o *OrderService) UpdateOrderStatus(ctx context.Context, req *pb.UpdateOrde
 	return resp, nil
 }
 
-// bu metod ishlayamdi!
-func (o *OrderService) ListOrders(ctx context.Context, req *pb.ListOrdersRequest) (*pb.ListOrdersResponse, error) {
-	return nil, nil
-}
+
 
 func (o *OrderService) GetOrder(ctx context.Context, req *pb.Id) (*pb.OrderInfo, error) {
 	resp, err := o.Order.GetOrder(req)
@@ -92,8 +89,4 @@ func (o *OrderService) GetPaymentStatus(ctx context.Context, req *pb.GetPaymentS
 	return resp, nil
 }
 
-// bu metod ishlamaydi
-func (o *OrderService) UpdateShippingInfo(ctx context.Context, req *pb.UpdateShippingInfoRequest) (*pb.ShippingInfo, error) {
-	return nil, nil
-}
 
