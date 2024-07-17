@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"product_service/config"
 	pbu "product_service/genproto/auth"
 	pb "product_service/genproto/orders"
@@ -28,11 +29,13 @@ func NewOrderService(db *sql.DB, cfg *config.Config) *OrderService {
 
 func (o *OrderService) CreateOrder(ctx context.Context, req *pb.CreateOrderRequest) (*pb.CreateOrderRequest, error) {
 	exist, err := o.Auth.ValidateUserId(ctx, &pbu.Id{Id: req.UserId})
+	fmt.Println(exist, "+++++++++++++++++++++++++++++++++++++++++++++++++++")
 	if !exist.Exist || err != nil {
 		return nil, err
 	}
 
 	resp, err := o.Order.CreateOrder(req)
+	fmt.Println(resp, req)
 	if err != nil {
 		return nil, err
 	}
