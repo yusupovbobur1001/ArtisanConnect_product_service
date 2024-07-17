@@ -1,0 +1,5 @@
+2024-07-16T14:09:11.013+0500	FATAL	cmd/main.go:27	sql: unknown driver "postgres" (forgotten import?)
+main.main
+	/home/bobur/go/src/github.com/Go11Group/imtihon3/ArtisanConnect_product_service/cmd/main.go:27
+runtime.main
+	/snap/go/10660/src/runtime/proc.go:271

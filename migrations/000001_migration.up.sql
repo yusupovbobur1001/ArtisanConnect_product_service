@@ -1,5 +1,5 @@
 CREATE TABLE products (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY default gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
     description TEXT, --+
     price DECIMAL(10, 2) NOT NULL,
@@ -10,9 +10,9 @@ CREATE TABLE products (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP
 );
-
+    
 CREATE TABLE orders ( --+
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY default gen_random_uuid(),
     user_id UUID,
     total_amount DECIMAL(10, 2) NOT NULL,
     status VARCHAR(20) NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE orders ( --+
 );
 
 CREATE TABLE order_items (--+
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY default gen_random_uuid(),
     order_id UUID REFERENCES orders(id),
     product_id UUID REFERENCES products(id),
     total_amount float NOT NULL,
@@ -31,14 +31,14 @@ CREATE TABLE order_items (--+
 );
 
 CREATE TABLE product_categories (--+
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY default gen_random_uuid(),
     name VARCHAR(50) NOT NULL,
     description TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE ratings (  
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY default gen_random_uuid(),
     product_id UUID REFERENCES products(id),
     user_id UUID,
     rating DECIMAL(2, 1) NOT NULL,
@@ -47,7 +47,7 @@ CREATE TABLE ratings (
 );
 
 CREATE TABLE payments (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY default gen_random_uuid(),
     order_id UUID REFERENCES orders(id),
     amount DECIMAL(10, 2) NOT NULL,
     status VARCHAR(20) NOT NULL,

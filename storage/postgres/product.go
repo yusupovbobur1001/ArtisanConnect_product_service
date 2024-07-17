@@ -26,7 +26,7 @@ func (p *ProdutRepo) CreateProduct(req *pb.CreateProductRequest) (*pb.ProductInf
 						artisan_id,
 						created_at)
 				values($1, $2, $3, $4, $5, $6, $7)  
-				returing id, name, description, price, quantity, artisan_id, created_at `
+				returning id, name, description, price, category_id, quantity, artisan_id, created_at `
 	err := p.Db.QueryRow(query, req.Name, req.Description,
 		req.Price, req.CategoryId, req.Quantity, req.ArtisanId, time.Now()).Scan(
 		&resp.Id, &req.Name, &resp.Description, &resp.Price, &resp.CategoryId, &resp.Quantity, &resp.ArtisanId, &resp.CreatedAt)
@@ -42,10 +42,11 @@ func (p *ProdutRepo) UpdateProduct(req *pb.UpdateProductRequest) (*pb.ProductInf
 		update 
 			products 
 		set 
-			name = $1, price = $2, product_id = $3, updated_at = $5
+			name = $1, price = $2, updated_at = $4
 		where 
-			id = $4 and deleted_at is null `
-	_, err := p.Db.Exec(query, req.Name, req.Price, req.ProductId, req.Id, time.Now())
+			id = $3 and deleted_at is null
+		 `
+	_, err := p.Db.Exec(query, req.Name, req.Price, req.Id, time.Now())
 	if err != nil {
 		return nil, err
 	}
@@ -68,9 +69,16 @@ func (p *ProdutRepo) GetByIdProduct(req *pb.Id) (*pb.ProductInfo, error) {
 		where 
 			  id = $1 and deleted_at is null `
 
-	err := p.Db.QueryRow(query, req.ProductId).Scan(&resp.Id, &resp.Name,
-		&resp.Description, &resp.Price, &resp.CategoryId, &resp.Quantity,
-		&resp.ArtisanId, &resp.CreatedAt, &resp.UpdatedAt)
+	err := p.Db.QueryRow(query, req.ProductId).Scan(
+		&resp.Id,
+		&resp.Name,
+		&resp.Description,
+		&resp.Price,
+		&resp.Quantity,
+		&resp.ArtisanId,
+		&resp.CreatedAt,
+		&resp.UpdatedAt,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +103,7 @@ func (p *ProdutRepo) DeleteProduct(req *pb.Id) (*pb.DeleteProductResponse, error
 }
 
 func (p *ProdutRepo) ListProducts(req *pb.ListProductsRequest) (*pb.ListProductsResponse, error) {
-	resp := &pb.ListProductsResponse{}
+	// resp := &pb.ListProductsResponse{}
 
 	m, err := p.GetAllProduct()
 	if err != nil {
@@ -161,8 +169,12 @@ func (p *ProdutRepo) ListProducts(req *pb.ListProductsRequest) (*pb.ListProducts
 		return nil, err
 	}
 
-	resp.Products = b
-	return resp, nil
+	return &pb.ListProductsResponse{
+		Products: b,
+		Total:    int32(total),
+		Page:     req.Page,
+		Limit:    req.Limit,
+	}, nil
 }
 
 func (p *ProdutRepo) GetAllProduct() ([]*pb.ProductInfo, error) {
@@ -196,7 +208,6 @@ func (p *ProdutRepo) GetAllProduct() ([]*pb.ProductInfo, error) {
 }
 
 func (p *ProdutRepo) SearchProduct(req *pb.SearchProductsRequest) (*pb.SearchProductsResponse, error) {
-
 	b, err := p.GetAllProduct()
 	if err != nil {
 		fmt.Println(err, "+++++++++++++")
@@ -216,32 +227,31 @@ func (p *ProdutRepo) SearchProduct(req *pb.SearchProductsRequest) (*pb.SearchPro
 	}
 
 	q := `
-		WITH NumberedRows AS (
-			SELECT 
-				id, name, description, price, category_id, quantity, artisan_id, created_at, updated_at,
-				ROW_NUMBER() OVER (ORDER BY id) AS row_num
-			FROM 
-				products
-		)
-		SELECT 
-			id, name, description, price, category_id, quantity, artisan_id, created_at, updated_at
-		FROM 
-			NumberedRows
-		WHERE 
-			row_num BETWEEN $1 AND $2 
-			AND price > $3
-    		AND price < $4
+        WITH NumberedRows AS (
+            SELECT 
+                id, name, description, price, category_id, quantity, artisan_id, created_at, updated_at,
+                ROW_NUMBER() OVER (ORDER BY id) AS row_num
+            FROM 
+                products
+            WHERE 
+                price > $3 AND price < $4
+        )
+        SELECT 
+            id, name, description, price, category_id, quantity, artisan_id, created_at, updated_at
+        FROM 
+            NumberedRows
+        WHERE 
+            row_num BETWEEN $1 AND $2 
+    `
 
-	`
-
-	params := []interface{}{}
+	params := []interface{}{startRow, endRow, req.MinPrice, req.MaxPrice}
 
 	if len(req.Query) > 0 {
-		params = append(params, req.Query)
-		q += fmt.Sprintf(" AND name = $%d ", len(params))
+		q += " AND name ILIKE $5"
+		params = append(params, "%"+req.Query+"%")
 	}
 
-	rows, err := p.Db.Query(q, startRow, endRow, req.MinPrice, req.MaxPrice)
+	rows, err := p.Db.Query(q, params...)
 	if err != nil {
 		return nil, err
 	}
@@ -279,17 +289,23 @@ func (p *ProdutRepo) SearchProduct(req *pb.SearchProductsRequest) (*pb.SearchPro
 func (p *ProdutRepo) AddProductRating(req *pb.AddProductRatingRequest) (*pb.RatingInfo, error) {
 	resp := pb.RatingInfo{}
 	q := `
-		insert into rating ratings(
+		insert into ratings(
 								product_id,
 								user_id,
 								rating, 
 								comment,
-								created_id)
+								created_at)
 		values($1, $2, $3, $4, $5)
-		returing id, product_id, user_id, rating, comment, created_at  `
+		returning id, product_id, user_id, rating, comment, created_at  `
 
 	err := p.Db.QueryRow(q, req.ProductId, req.UserId, req.Rating, req.Comment, time.Now()).Scan(
-		&resp.Id, &resp.ProductId, &resp.UserId, &resp.Rating, &resp.Comment, &resp.CreatedAt)
+							&resp.Id, 
+							&resp.ProductId, 
+							&resp.UserId, 
+							&resp.Rating, 
+							&resp.Comment, 
+							&resp.CreatedAt,
+					)
 	if err != nil {
 		return nil, err
 	}

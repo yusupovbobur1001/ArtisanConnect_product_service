@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"product_service/config"
+
+	_ "github.com/lib/pq"
 )
 
 func ConnDB() (*sql.DB, error) {

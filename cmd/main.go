@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"product_service/config"
@@ -8,6 +9,7 @@ import (
 	pb "product_service/genproto/products"
 	"product_service/pkg/logger"
 	"product_service/service"
+
 	"product_service/storage/postgres"
 
 	"google.golang.org/grpc"
@@ -22,14 +24,17 @@ func main() {
 		return
 	}
 
+	fmt.Println("service 8070 is listening on post ...")
+
 	db, err := postgres.ConnDB()
 	if err != nil {
 		logger.Fatal(err.Error())
 		return
 	}
 
-	lisstener, err := net.Listen("tcp", cfg.PRODUCT_SERVICE_PORT)
+	lisstener, err := net.Listen("tcp", "localhost"+cfg.PRODUCT_SERVICE_PORT)
 	if err != nil {
+		fmt.Println(err)
 		logger.Fatal("error while making tcp connection")
 		return
 	}

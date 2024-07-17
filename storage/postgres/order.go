@@ -81,7 +81,7 @@ func (o *OrderRepo) CancelOrder(req *pb.Id) (*pb.CancelOrder1, error) {
 		  		id, status, updated_at 
 		`
 
-	err := o.Db.QueryRow(q, req.OrderId).Scan(
+	err := o.Db.QueryRow(q, time.Now(), req.OrderId).Scan(
 		&resp.Id,
 		&resp.Status,
 		&resp.UpdatedAt,
@@ -117,36 +117,6 @@ func (o *OrderRepo) UpdateOrderStatus(req *pb.UpdateOrderStatusRequest) (*pb.Upd
 	return &resp, nil
 }
 
-// func (o *OrderRepo) ListOrders(req *pb.ListOrdersRequest) (*pb.ListOrdersResponse, error) {
-
-// 	totalPage := (total + int(req.Limit) - 1) / int(req.Limit)
-// 	if totalPage < int(req.Page) {
-// 		return nil, fmt.Errorf("totalPage dan page katta bo`lib qoldi!, err: %v", err)
-// 	}
-
-// 	startRow := (int(req.Page)-1)*int(req.Limit) + 1
-// 	endRow := startRow + int(req.Limit) - 1
-// 	if endRow > total {
-// 		endRow = total
-// 	}
-
-// 	q := `
-// 		WITH NumberedRows AS (
-// 			SELECT
-// 				id, name, description, price, category_id, quantity, artisan_id, created_at, updated_at,
-// 				ROW_NUMBER() OVER (ORDER BY id) AS row_num
-// 			FROM
-// 				orders
-// 		)
-// 		SELECT
-// 			id, name, description, price, category_id, quantity, artisan_id, created_at, updated_at
-// 		FROM
-// 			NumberedRows
-// 		WHERE
-// 			row_num BETWEEN $1 AND $2
-// 	`
-// }
-
 func (o *OrderRepo) GetOrder(req *pb.Id) (*pb.OrderInfo, error) {
 	q := `
 	  SELECT 
@@ -178,7 +148,7 @@ func (o *OrderRepo) GetOrder(req *pb.Id) (*pb.OrderInfo, error) {
 
 	orderItemsQuery := `
 	  SELECT 
-		product_id, quantity, price
+		product_id, price
 	  FROM 
 		order_items
 	  WHERE 
@@ -195,7 +165,7 @@ func (o *OrderRepo) GetOrder(req *pb.Id) (*pb.OrderInfo, error) {
 
 	for rows.Next() {
 		var item pb.OrderItem
-		err := rows.Scan(&item.ProductId, &item.Quantity, &item.Price)
+		err := rows.Scan(&item.ProductId, &item.Price)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan order item: %v", err)
 		}
@@ -235,10 +205,8 @@ func (o *OrderRepo) PayOrder(req *pb.PayOrderRequest) (*pb.PaymentInfo, error) {
 							(id,
 							order_id,
 							payment_method,
-							expiry_date
-							cvv,
 							created_at,
-							status,
+							status,	
 							amount)
 		values($1, $2, $3, $4, $5, $6, $7) 
 		returning id, order_id, created_at, status
@@ -263,42 +231,36 @@ func (o *OrderRepo) PayOrder(req *pb.PayOrderRequest) (*pb.PaymentInfo, error) {
 		TransactionId: "1234",
 		CreatedAt:     resp.CreatedAt,
 	}, nil
-
 }
 
 func (o *OrderRepo) GetPaymentStatus(req *pb.GetPaymentStatusRequest) (*pb.PaymentInfo, error) {
-	resp := pb.PaymentInfo{}
-	q := `
-		select 
-			id,
-			order_id,
-			amoutn, 
-			status,
-			transaction_id,
-			created_at
-		from 
-			payments
-		where 
-			order_id = $1
-		`
-	err := o.Db.QueryRow(q, req.OrderId).Scan(
-				&resp.PaymentId,
-				&resp.OrderId,
-				&resp.Amount,
-				&resp.Status,
-				&resp.TransactionId,
-				&resp.CreatedAt,
-	)	
-	if err != nil {
-		return nil, err
-	}
-	return &pb.PaymentInfo{
-		PaymentId: resp.PaymentId,
-		OrderId: resp.OrderId,
-		Amount: resp.Amount,
-		Status: resp.Status,
-		TransactionId: resp.TransactionId,
-		CreatedAt: resp.CreatedAt,
-	}, nil
+    resp := pb.PaymentInfo{}
+    q := `
+        SELECT 
+            id,
+            order_id,
+            status,
+            transaction_id,
+            created_at
+        FROM 
+            payments
+        WHERE 
+            order_id = $1
+    `
+    err := o.Db.QueryRow(q, req.OrderId).Scan(
+        &resp.PaymentId,
+        &resp.OrderId,
+        &resp.Status,
+        &resp.TransactionId,
+        &resp.CreatedAt,
+    )
+    if err != nil {
+        if err == sql.ErrNoRows {
+            return nil, fmt.Errorf("no payment found for order_id %s", req.OrderId)
+        }
+        return nil, err
+    }
+    return &resp, nil
 }
+
 

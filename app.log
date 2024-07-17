@@ -1,0 +1,50 @@
+2024-07-16T14:05:37.073+0500	FATAL	cmd/main.go:27	sql: unknown driver "postgres" (forgotten import?)
+main.main
+	/home/bobur/go/src/github.com/Go11Group/imtihon3/ArtisanConnect_product_service/cmd/main.go:27
+runtime.main
+	/snap/go/10660/src/runtime/proc.go:271
+2024-07-16T14:06:53.854+0500	FATAL	cmd/main.go:27	sql: unknown driver "postgres" (forgotten import?)
+main.main
+	/home/bobur/go/src/github.com/Go11Group/imtihon3/ArtisanConnect_product_service/cmd/main.go:27
+runtime.main
+	/snap/go/10660/src/runtime/proc.go:271
+2024-07-16T14:07:57.720+0500	FATAL	cmd/main.go:27	sql: unknown driver "postgres" (forgotten import?)
+main.main
+	/home/bobur/go/src/github.com/Go11Group/imtihon3/ArtisanConnect_product_service/cmd/main.go:27
+runtime.main
+	/snap/go/10660/src/runtime/proc.go:271
+2024-07-16T14:08:30.003+0500	FATAL	cmd/main.go:27	sql: unknown driver "postgres" (forgotten import?)
+main.main
+	/home/bobur/go/src/github.com/Go11Group/imtihon3/ArtisanConnect_product_service/cmd/main.go:27
+runtime.main
+	/snap/go/10660/src/runtime/proc.go:271
+2024-07-17T10:37:24.273+0500	FATAL	cmd/main.go:34	error while making tcp connection
+main.main
+	/home/bobur/go/src/github.com/Go11Group/imtihon3/ArtisanConnect_product_service/cmd/main.go:34
+runtime.main
+	/snap/go/10660/src/runtime/proc.go:271
+2024-07-17T10:38:36.154+0500	FATAL	cmd/main.go:34	error while making tcp connection
+main.main
+	/home/bobur/go/src/github.com/Go11Group/imtihon3/ArtisanConnect_product_service/cmd/main.go:34
+runtime.main
+	/snap/go/10660/src/runtime/proc.go:271
+2024-07-17T10:39:39.794+0500	FATAL	cmd/main.go:34	error while making tcp connection
+main.main
+	/home/bobur/go/src/github.com/Go11Group/imtihon3/ArtisanConnect_product_service/cmd/main.go:34
+runtime.main
+	/snap/go/10660/src/runtime/proc.go:271
+2024-07-17T10:43:06.678+0500	FATAL	cmd/main.go:36	error while making tcp connection
+main.main
+	/home/bobur/go/src/github.com/Go11Group/imtihon3/ArtisanConnect_product_service/cmd/main.go:36
+runtime.main
+	/snap/go/10660/src/runtime/proc.go:271
+2024-07-17T10:43:26.977+0500	FATAL	cmd/main.go:36	error while making tcp connection
+main.main
+	/home/bobur/go/src/github.com/Go11Group/imtihon3/ArtisanConnect_product_service/cmd/main.go:36
+runtime.main
+	/snap/go/10660/src/runtime/proc.go:271
+2024-07-17T17:14:34.825+0500	FATAL	cmd/main.go:36	error while making tcp connection
+main.main
+	/home/bobur/go/src/github.com/Go11Group/imtihon3/ArtisanConnect_product_service/cmd/main.go:36
+runtime.main
+	/snap/go/10660/src/runtime/proc.go:271
