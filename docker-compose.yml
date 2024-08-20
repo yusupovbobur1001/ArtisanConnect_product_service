@@ -1,0 +1,45 @@
+version: '3.9'
+
+services:
+
+  db:
+    image: postgres:16.3
+    container_name: postgres-product
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: artisanconnect_product
+    networks:
+      - app-networks
+    ports:
+      - "5434:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  migrate:
+    image: migrate/migrate
+    networks: 
+      - app-networks
+    volumes:
+      - ./migrations:/migrations
+    depends_on:
+      - db
+    command: [ "-path", "/migrations", "-database", "postgres://postgres:pass@aritsanConnP:5432/artisanconnect_product?sslmode=disable", "up" ]
+
+  auth-service:
+    build: .
+    container_name: product-service
+    networks:
+      - app-networks
+    ports:
+      - "8070:8070"
+    depends_on:
+      - db
+
+volumes:
+  db-data: 
+
+networks:
+  app-networks:
+    name: app-networks
+    external: true

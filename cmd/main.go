@@ -32,7 +32,7 @@ func main() {
 		return
 	}
 
-	lisstener, err := net.Listen("tcp", "localhost"+cfg.PRODUCT_SERVICE_PORT)
+	lisstener, err := net.Listen("tcp", "aritsanConnP"+cfg.PRODUCT_SERVICE_PORT)
 	if err != nil {
 		fmt.Println(err)
 		logger.Fatal("error while making tcp connection")
